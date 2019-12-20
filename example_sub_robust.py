@@ -1,5 +1,5 @@
 import time
-from umqtt.robust import MQTTClient
+from umqtt.robust2 import MQTTClient
 
 
 def sub_cb(topic, msg):
