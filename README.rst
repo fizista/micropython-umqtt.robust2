@@ -1,10 +1,10 @@
-umqtt.robust
-============
+umqtt.robust2
+============+
 
-umqtt is a simple MQTT client for MicroPython. (Note that it uses some
+umqtt.robust2 is a MQTT client for MicroPython. (Note that it uses some
 MicroPython shortcuts and doesn't work with CPython). It consists of
-two submodules: umqtt.simple and umqtt.robust. umqtt.robust is built
-on top of umqtt.simple and adds auto-reconnect facilities for some of
+two submodules: umqtt.simple2 and umqtt.robust2. umqtt.robust2 is built
+on top of umqtt.simple2 and adds auto-reconnect facilities for some of
 networking errors.
 
 What does it mean to be "robust" ?
@@ -13,14 +13,14 @@ What does it mean to be "robust" ?
 Modern computing systems are sufficiently complex and have multiple
 points of failure. Consider for example that nothing will work if
 there's no power (mains outage or battery ran out). As you may imagine,
-umqtt.robust won't help you with your flat battery. Most computing
+umqtt.robust2 won't help you with your flat battery. Most computing
 systems are now networked, and communication is another weak link.
 This is especially true for wireless communications. If two of your
-systems can't connect reliably communicate via WiFi, umqtt.robust
+systems can't connect reliably communicate via WiFi, umqtt.robust2
 can't magically resolve that (but it may help with intermittent
 WiFi issues).
 
-What umqtt.robust tries to do is very simple - if while trying to
+What umqtt.robust2 tries to do is very simple - if while trying to
 perform some operation, it detects that connection to MQTT breaks,
 it tries to reconnect to it. That's good direction towards "robustness",
 but the problem that there is no single definition of what "robust"
@@ -65,15 +65,15 @@ b) Robustness is a complex measure, it doesn't depend on one single
    work better, it would help to add a visual feedback, so a user
    knew what happens.
 
-As you may imagine, umqtt.robust doesn't, and can't, cover all possible
+As you may imagine, umqtt.robust2 doesn't, and can't, cover all possible
 "robustness" scenarios, nor it alone can make your MQTT application
 "robust". Rather, it's a barebones example of how to reconnect to an
 MQTT server in case of a connection error. As such, it's just one
 of many steps required to make your app robust, and majority of those
 steps lie on *your application* side. With that in mind, any realistic
-application would subclass umqtt.robust.MQTTClient class and override
+application would subclass umqtt.robust2.MQTTClient class and override
 delay() and reconnect() methods to suit particular usage scenario. It
-may even happen that umqtt.robust won't even suit your needs, and you
+may even happen that umqtt.robust2 won't even suit your needs, and you
 will need to implement your "robust" handling from scratch.
 
 
@@ -84,7 +84,7 @@ Consider an example: you subscribed to some MQTT topics, then connection
 went down. If we talk "robust", then once you reconnect, you want any
 messages which arrived when the connection was down, to be still delivered
 to you. That requires retainment and persistency enabled on MQTT server.
-As umqtt.robust tries to achieve as much "robustness" as possible, it
+As umqtt.robust2 tries to achieve as much "robustness" as possible, it
 makes a requirement that the MQTT server it communicates to has persistency
 enabled. This include persistent sessions, meaning that any client
 subscriptions are retained across disconnect, and if you subscribed once,
@@ -107,4 +107,4 @@ However, not all broker offer true, persistent MQTT support:
 * Many so-called "cloud providers" offer very limited subset of MQTT for
   their free/inexpensive tiers. Persistence and QoS are features usually
   not supported. It's hard to achieve any true robustness with these
-  demo-like offerings, and umqtt.robust isn't designed to work with them.
+  demo-like offerings, and umqtt.robust2 isn't designed to work with them.
