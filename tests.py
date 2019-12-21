@@ -179,9 +179,11 @@ class TestMQTT:
         self.client.connect()
 
         self.client.sock.close()
-        self.client.publish(topic, 'test QoS 0', retain=True)
+        self.client.publish(topic, 'test QoS 0')
         self.client.check_msg()
         self.client.subscribe(topic + '#')
+
+        assert self.client.send_queue()
         t, m, r = self.get_subscription_out()
         assert t.decode('ascii') == topic
         assert m.decode('ascii') == 'test QoS 0'
@@ -190,10 +192,6 @@ class TestMQTT:
 
     def test_publish_qos_1(self, topic):
         self.client.connect()
-        rec_client = self.init_mqtt_client('_pub')
-
-        rec_client.connect()
-        rec_client.subscribe(topic + '#')
 
         self.client.sock.close()
         pid = self.client.publish(topic, 'test QoS 1', qos=1)
