@@ -74,7 +74,7 @@ class MQTTClient(simple2.MQTTClient):
 
     def log(self, in_place, e):
         if self.DEBUG:
-            place_str = ('?', 'connect', 'publish', 'subscribe', 'reconnect', 'sendquaue')
+            place_str = ('?', 'connect', 'publish', 'subscribe', 'reconnect', 'sendqueue')
             print("MQTT (%s): %r" % (place_str[in_place], e))
 
     def reconnect(self, socket_timeout=-1):
