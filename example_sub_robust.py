@@ -17,6 +17,7 @@ c.set_callback(sub_cb)
 # subscriptions will be stored server-side, and will be persistent,
 # (as we use clean_session=False).
 #
+# TODO: Still exists???
 # There can be a problem when a session for a given client exists,
 # but doesn't have subscriptions a particular application expects.
 # In this case, a session needs to be cleaned first. See
