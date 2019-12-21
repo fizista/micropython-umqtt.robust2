@@ -7,7 +7,7 @@ class MQTTClient(simple2.MQTTClient):
 
     # Information whether we store unsent messages with the flag QoS==0 in the queue.
     KEEP_QOS0 = True
-    # TODO: implement
+    # Option, limits the possibility of only one unique message being queued.
     NO_QUEUE_DUPS = True
 
     def __init__(self, *args, **kwargs):
@@ -117,6 +117,9 @@ class MQTTClient(simple2.MQTTClient):
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 2)
             # If the message cannot be sent, we put it in the queue to try to resend it.
+            if self.NO_QUEUE_DUPS:
+                if data in self.msg_to_send:
+                    return
             if self.KEEP_QOS0 and qos == 0:
                 self.msg_to_send.append(data)
             elif qos == 1:
@@ -140,8 +143,9 @@ class MQTTClient(simple2.MQTTClient):
             return out
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 3)
-            # We delete all previous subscriptions for the same topic from the queue.
-            # The most important is the last subscription.
+            if self.NO_QUEUE_DUPS:
+                if data in self.sub_to_send:
+                    return
             self.sub_to_send.append(data)
 
     def send_queue(self, socket_timeout=-1):
