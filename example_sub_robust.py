@@ -2,8 +2,8 @@ import time
 from umqtt.robust2 import MQTTClient
 
 
-def sub_cb(topic, msg):
-    print((topic, msg))
+def sub_cb(topic, msg, retained, duplicate):
+    print((topic, msg, retained, duplicate))
 
 
 c = MQTTClient("umqtt_client", "localhost")
