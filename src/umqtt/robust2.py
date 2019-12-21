@@ -9,6 +9,8 @@ class MQTTClient(simple2.MQTTClient):
     KEEP_QOS0 = True
     # Option, limits the possibility of only one unique message being queued.
     NO_QUEUE_DUPS = True
+    # Limit the number of unsent messages in the queue.
+    MSG_QUEUE_MAX = 5
 
     def __init__(self, *args, **kwargs):
         "See documentation for `umqtt.simple2.MQTTClient.__init__()`"
@@ -87,6 +89,20 @@ class MQTTClient(simple2.MQTTClient):
             return out
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 4)
+
+    def add_msg_to_send(self, data):
+        """
+        By overwriting this method, you can control the amount of stored data in the queue.
+        This is important because we do not have an infinite amount of memory in the devices.
+
+        Currently, this method limits the queue length to MSG_QUEUE_MAX messages.
+
+        :param data:
+        :return:
+        """
+        self.msg_to_send.append(data)
+        if len(self.msg_to_send) > self.MSG_QUEUE_MAX:
+            self.msg_to_send.pop(0)
 
     def publish(self, topic, msg, retain=False, qos=0, socket_timeout=-1):
         """
