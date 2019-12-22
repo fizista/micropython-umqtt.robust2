@@ -1,4 +1,4 @@
-import time
+import utime
 from umqtt.robust2 import MQTTClient
 
 
@@ -9,6 +9,13 @@ def sub_cb(topic, msg, retained, duplicate):
 c = MQTTClient("umqtt_client", "localhost")
 # Print diagnostic messages when retries/reconnects happens
 c.DEBUG = True
+# Information whether we store unsent messages with the flag QoS==0 in the queue.
+c.KEEP_QOS0 = False
+# Option, limits the possibility of only one unique message being queued.
+c.NO_QUEUE_DUPS = True
+# Limit the number of unsent messages in the queue.
+c.MSG_QUEUE_MAX = 2
+
 c.set_callback(sub_cb)
 # Connect to server, requesting not to clean session for this
 # client. If there was no existing session (False return value
@@ -37,6 +44,16 @@ if not c.connect(clean_session=False):
     c.subscribe(b"foo_topic")
 
 while 1:
-    c.wait_msg()
+    utime.sleep_ms(500)
+
+    # At this point in the code you must consider how to handle
+    # connection errors.  And how often to resume the connection.
+    if c.is_conn_issue():
+        # If the connection is successful, the is_conn_issue
+        # method will not return a connection error.
+        c.reconnect()
+
+    c.check_msg()
+    c.send_queue()  # needed when using the caching capabilities for unsent messages
 
 c.disconnect()

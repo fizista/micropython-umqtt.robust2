@@ -180,6 +180,8 @@ class TestMQTT:
 
         self.client.sock.close()
         self.client.publish(topic, 'test QoS 0')
+        if self.client.is_conn_issue():
+            self.client.reconnect()
         self.client.check_msg()
         self.client.subscribe(topic + '#')
 
@@ -200,7 +202,9 @@ class TestMQTT:
         assert self.client.msg_to_send == [(topic, 'test QoS 1', False, 1)]
         assert self.client.msg_to_confirm == {}
 
-        self.client.check_msg()  # reconnect
+        if self.client.is_conn_issue():
+            self.client.reconnect()
+
         assert self.client.send_queue()
         print('msg_to_:', self.client.msg_to_send, self.client.msg_to_confirm, self.client.rcv_pids)
         pid = list(self.client.rcv_pids.keys())[0]
@@ -227,7 +231,8 @@ class TestMQTT:
         assert self.client.sub_to_send == [(topic + '#', 0)]
         assert self.client.sub_to_confirm == {}
 
-        self.client.check_msg()  # reconnect
+        if self.client.is_conn_issue():
+            self.client.reconnect()
 
         print(self.client.sub_to_send, self.client.sub_to_confirm, self.client.rcv_pids, 3)
         assert self.client.sub_to_send == [(topic + '#', 0)]

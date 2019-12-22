@@ -60,7 +60,7 @@ class MQTTClient(simple2.MQTTClient):
 
         If clean_session==True, then the queues are cleared.
 
-        Connection problems are captured and handled by `wait_msg()`
+        Connection problems are captured and handled by `is_conn_issue()`
         """
         if clean_session:
             self.msg_to_send[:] = []
@@ -72,16 +72,22 @@ class MQTTClient(simple2.MQTTClient):
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 1)
 
-    def log(self, in_place, e):
+    def log(self):
         if self.DEBUG:
-            place_str = ('?', 'connect', 'publish', 'subscribe', 'reconnect', 'sendqueue')
-            print("MQTT (%s): %r" % (place_str[in_place], e))
+            if type(self.conn_issue) is tuple:
+                conn_issue, issue_place = self.conn_issue
+            else:
+                conn_issue = self.conn_issue
+                issue_place = 0
+            place_str = ('?', 'connect', 'publish', 'subscribe',
+                         'reconnect', 'sendqueue', 'disconnect', 'ping', 'wait_msg')
+            print("MQTT (%s): %r" % (place_str[issue_place], conn_issue))
 
     def reconnect(self, socket_timeout=-1):
         """
         The function tries to resume the connection.
 
-        Connection problems are captured and handled by `wait_msg()`
+        Connection problems are captured and handled by `is_conn_issue()`
         """
         try:
             out = super().connect(False, socket_timeout=socket_timeout)
@@ -104,6 +110,28 @@ class MQTTClient(simple2.MQTTClient):
         if len(self.msg_to_send) > self.MSG_QUEUE_MAX:
             self.msg_to_send.pop(0)
 
+    def disconnect(self, socket_timeout=-1):
+        """
+        See documentation for `umqtt.simple2.MQTTClient.disconnect()`
+
+        Connection problems are captured and handled by `is_conn_issue()`
+        """
+        try:
+            return super().disconnect(self, socket_timeout=-1)
+        except (OSError, simple2.MQTTException) as e:
+            self.conn_issue = (e, 6)
+
+    def ping(self, socket_timeout=-1):
+        """
+        See documentation for `umqtt.simple2.MQTTClient.ping()`
+
+        Connection problems are captured and handled by `is_conn_issue()`
+        """
+        try:
+            return super().ping(self, socket_timeout=-1)
+        except (OSError, simple2.MQTTException) as e:
+            self.conn_issue = (e, 7)
+
     def publish(self, topic, msg, retain=False, qos=0, socket_timeout=-1):
         """
         See documentation for `umqtt.simple2.MQTTClient.publish()`
@@ -114,7 +142,7 @@ class MQTTClient(simple2.MQTTClient):
 
         When we have messages with the retain flag set, only one last message with that flag is sent!
 
-        Connection problems are captured and handled by `wait_msg()`
+        Connection problems are captured and handled by `is_conn_issue()`
 
         :return: None od PID for QoS==1 (only if the message is sent immediately, otherwise it returns None)
         """
@@ -147,7 +175,7 @@ class MQTTClient(simple2.MQTTClient):
 
         The function tries to subscribe to the topic. If it fails, the topic subscription goes into the subscription queue.
 
-        Connection problems are captured and handled by `wait_msg()`
+        Connection problems are captured and handled by `is_conn_issue()`
         """
         data = (topic, qos)
         # We delete all previous subscriptions for the same topic from the queue.
@@ -201,24 +229,32 @@ class MQTTClient(simple2.MQTTClient):
 
         return True
 
+    def is_conn_issue(self):
+        """
+        With this function we can check if there is any connection problem.
+
+        It is best to use this function with the reconnect() method to resume the connection when it is broken.
+
+        You can also check the result of methods such as this:
+        `connect()`, `publish()`, `subscribe()`, `reconnect()`, `send_queue()`, `disconnect()`, `amping()`.
+
+        :return: Connection problem
+        :rtype: bool
+        """
+        if self.conn_issue:
+            self.log()
+        return bool(self.conn_issue)
+
     def wait_msg(self, socket_timeout=None):
         """
         See documentation for `umqtt.simple2.MQTTClient.wait_msg()`
 
         The function tries to subscribe to the topic. If it fails, the topic subscription goes into the subscription queue.
 
-        Connection problems are captured and handled by `wait_msg()`
+        Connection problems are captured and handled by `is_conn_issue()`
         """
-        if self.conn_issue:
-            if type(self.conn_issue) is tuple:
-                conn_issue, issue_place = self.conn_issue
-                self.log(issue_place, conn_issue)
-            else:
-                self.log(0, self.conn_issue)
+        try:
+            return super().wait_msg(socket_timeout)
+        except (OSError, simple2.MQTTException) as e:
+            self.conn_issue = (e, 8)
 
-            self.reconnect(socket_timeout)
-        else:
-            try:
-                return super().wait_msg(socket_timeout)
-            except (OSError, simple2.MQTTException) as e:
-                self.conn_issue = e
