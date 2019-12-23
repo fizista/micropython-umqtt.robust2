@@ -137,7 +137,7 @@ class SDistCommand(sdist_upip.sdist):
         def print_diff_files(dcmp):
             is_diff = False
             for name in dcmp.diff_files:
-                print("diff_file %s found in %s and %s" % (name, dcmp.left, dcmp.right))
+                #print("diff_file %s found in %s and %s" % (name, dcmp.left, dcmp.right))
                 is_diff = True
             for sub_dcmp in dcmp.subdirs.values():
                 is_diff = is_diff or print_diff_files(sub_dcmp)
