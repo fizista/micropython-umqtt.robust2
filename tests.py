@@ -1,6 +1,5 @@
 import utime
 from ubinascii import hexlify
-from umqtt.simple2 import MQTTException, pid_gen
 from umqtt.robust2 import MQTTClient as _MQTTClient
 
 
@@ -9,7 +8,7 @@ def debug_print(data):
     for i, d in enumerate(data):
         if type(d) == str:
             d = ord(d)
-        if d > 31 and d < 127:
+        if 31 < d < 127:
             print(chr(d), end='')
         else:
             print('.', end='')
@@ -109,7 +108,7 @@ class TestMQTT:
         client = self.clients[clientid_postfix]
         for i in range(timeout):
             client.check_msg()
-            if clientid_postfix in self.subsctiption_out and self.subsctiption_out[clientid_postfix] != None:
+            if clientid_postfix in self.subsctiption_out and self.subsctiption_out[clientid_postfix] is not None:
                 o = self.subsctiption_out[clientid_postfix]
                 self.subsctiption_out[clientid_postfix] = None
                 return o
@@ -122,7 +121,7 @@ class TestMQTT:
         for i in range(timeout + 1):
             utime.sleep(1)
             client.check_msg()
-            if clientid_postfix in self.status_out and self.status_out[clientid_postfix] != None:
+            if clientid_postfix in self.status_out and self.status_out[clientid_postfix] is not None:
                 o = self.status_out[clientid_postfix]
                 self.status_out[clientid_postfix] = None
                 if pid:
@@ -200,6 +199,7 @@ class TestMQTT:
 
         self.client.sock.close()
         pid = self.client.publish(topic, 'test QoS 1', qos=1)
+        assert pid is None
 
         print('msg_to_:', self.client.msg_to_send, self.client.msg_to_confirm, self.client.rcv_pids)
         assert self.client.msg_to_send == [(topic, 'test QoS 1', False, 1)]
@@ -229,6 +229,7 @@ class TestMQTT:
 
         self.client.sock.close()
         pid = self.client.subscribe(topic + '#')
+        assert pid is None
 
         print(self.client.sub_to_send, self.client.sub_to_confirm, self.client.rcv_pids, 2)
         assert self.client.sub_to_send == [(topic + '#', 0)]

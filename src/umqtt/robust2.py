@@ -13,16 +13,20 @@ class MQTTClient(simple2.MQTTClient):
     MSG_QUEUE_MAX = 5
 
     def __init__(self, *args, **kwargs):
-        "See documentation for `umqtt.simple2.MQTTClient.__init__()`"
+        """
+        See documentation for `umqtt.simple2.MQTTClient.__init__()`
+        """
         super().__init__(*args, **kwargs)
         self.msg_to_send = []  # Queue with list of messages to send
         self.sub_to_send = []  # Queue with list of subscriptions to send
-        self.msg_to_confirm = {}  # Queue with a list of messages waiting for the server to confirm receipt of the message.
-        self.sub_to_confirm = {}  # A queue with a subscription list waiting for the server to confirm receipt of the subscription.
+        self.msg_to_confirm = {}  # Queue with a list of messages waiting for the server to confirm of the message.
+        self.sub_to_confirm = {}  # Queue with a subscription list waiting for the server to confirm of the subscription
         self.conn_issue = None  # We store here if there is a connection problem.
 
     def set_callback_status(self, f):
-        "See documentation for `umqtt.simple2.MQTTClient.set_callback_status()`"
+        """
+        See documentation for `umqtt.simple2.MQTTClient.set_callback_status()`
+        """
         self._cbstat = f
 
     def cbstat(self, pid, stat):
@@ -173,7 +177,8 @@ class MQTTClient(simple2.MQTTClient):
         """
         See documentation for `umqtt.simple2.MQTTClient.subscribe()`
 
-        The function tries to subscribe to the topic. If it fails, the topic subscription goes into the subscription queue.
+        The function tries to subscribe to the topic. If it fails,
+        the topic subscription goes into the subscription queue.
 
         Connection problems are captured and handled by `is_conn_issue()`
         """
@@ -213,7 +218,7 @@ class MQTTClient(simple2.MQTTClient):
                 self.conn_issue = (e, 5)
                 return False
         self.msg_to_send[:] = [m for m in self.msg_to_send if m not in msg_to_del]
-        del (msg_to_del)
+        del msg_to_del
 
         sub_to_del = []
         for data in self.sub_to_send:
@@ -243,7 +248,7 @@ class MQTTClient(simple2.MQTTClient):
         """
         time_from__last_cpackage = ticks_diff(ticks_ms(), self.last_cpacket) // 1000
 
-        if self.keepalive > 0 and time_from__last_cpackage > self.keepalive:
+        if 0 < self.keepalive < time_from__last_cpackage:
             self.conn_issue = (simple2.MQTTException(7), 9)
 
         if self.conn_issue:
@@ -254,7 +259,8 @@ class MQTTClient(simple2.MQTTClient):
         """
         See documentation for `umqtt.simple2.MQTTClient.wait_msg()`
 
-        The function tries to subscribe to the topic. If it fails, the topic subscription goes into the subscription queue.
+        The function tries to subscribe to the topic. If it fails,
+        the topic subscription goes into the subscription queue.
 
         Connection problems are captured and handled by `is_conn_issue()`
         """
@@ -262,4 +268,3 @@ class MQTTClient(simple2.MQTTClient):
             return super().wait_msg(socket_timeout)
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 8)
-
