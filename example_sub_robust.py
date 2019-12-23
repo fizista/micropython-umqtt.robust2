@@ -53,7 +53,7 @@ while 1:
         # method will not return a connection error.
         c.reconnect()
 
-    c.check_msg()
+    c.check_msg() # needed when publish(qos=1), ping(), subscribe()
     c.send_queue()  # needed when using the caching capabilities for unsent messages
 
 c.disconnect()
