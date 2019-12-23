@@ -117,7 +117,7 @@ class MQTTClient(simple2.MQTTClient):
         Connection problems are captured and handled by `is_conn_issue()`
         """
         try:
-            return super().disconnect(self, socket_timeout=-1)
+            return super().disconnect(socket_timeout=socket_timeout)
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 6)
 
@@ -128,7 +128,7 @@ class MQTTClient(simple2.MQTTClient):
         Connection problems are captured and handled by `is_conn_issue()`
         """
         try:
-            return super().ping(self, socket_timeout=-1)
+            return super().ping(socket_timeout=socket_timeout)
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 7)
 
