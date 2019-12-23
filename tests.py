@@ -72,9 +72,11 @@ class TestMQTT:
         self.clients = {}
         self.client = None
 
-    def init_mqtt_client(self, clientid_postfix='_1'):
+    def init_mqtt_client(self, clientid_postfix='_1', mqtt_kwargs=None):
         args = list(self.mqtt_client_args[0][:])
         kwargs = self.mqtt_client_args[1].copy()
+        if mqtt_kwargs:
+            kwargs.update(mqtt_kwargs)
         if len(args) > 0:
             args[0] += clientid_postfix
         if 'client_id' in kwargs:
@@ -144,6 +146,7 @@ class TestMQTT:
             'test_publish_qos_0',
             'test_publish_qos_1',
             'test_subscribe',
+            'test_keepalive'
         ]
         for test_name in tests:
             if not self.run_test(test_name):
@@ -253,3 +256,18 @@ class TestMQTT:
         assert self.client.sub_to_confirm == {}
 
         self.client.disconnect()
+
+    def test_keepalive(self, topic):
+        c = self.init_mqtt_client(mqtt_kwargs={'keepalive': 3})
+        c.connect()  # 3 sec
+        assert not c.is_conn_issue()
+        utime.sleep(2)
+        c.ping()  # 3 sec
+        utime.sleep(1)
+        c.check_msg()
+        assert not c.is_conn_issue()
+        utime.sleep(1)
+        assert not c.is_conn_issue()
+        utime.sleep(3)
+        assert c.is_conn_issue()
+        c.disconnect()
