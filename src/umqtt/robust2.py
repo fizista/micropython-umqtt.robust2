@@ -1,4 +1,4 @@
-import utime
+from utime import ticks_ms, ticks_diff
 from . import simple2
 
 
@@ -80,7 +80,7 @@ class MQTTClient(simple2.MQTTClient):
                 conn_issue = self.conn_issue
                 issue_place = 0
             place_str = ('?', 'connect', 'publish', 'subscribe',
-                         'reconnect', 'sendqueue', 'disconnect', 'ping', 'wait_msg')
+                         'reconnect', 'sendqueue', 'disconnect', 'ping', 'wait_msg', 'keepalive')
             print("MQTT (%s): %r" % (place_str[issue_place], conn_issue))
 
     def reconnect(self, socket_timeout=-1):
@@ -241,6 +241,11 @@ class MQTTClient(simple2.MQTTClient):
         :return: Connection problem
         :rtype: bool
         """
+        time_from__last_cpackage = ticks_diff(ticks_ms(), self.last_cpacket) // 1000
+
+        if self.keepalive > 0 and time_from__last_cpackage > self.keepalive:
+            self.conn_issue = (simple2.MQTTException(7), 9)
+
         if self.conn_issue:
             self.log()
         return bool(self.conn_issue)
