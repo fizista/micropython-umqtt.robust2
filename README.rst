@@ -1,11 +1,63 @@
+.. role:: bash(code)
+   :language: bash
+
+.. role:: python(code)
+   :language: python
+
 umqtt.robust2
-============+
+=============
 
 umqtt.robust2 is a MQTT client for MicroPython. (Note that it uses some
 MicroPython shortcuts and doesn't work with CPython). It consists of
 two submodules: umqtt.simple2 and umqtt.robust2. umqtt.robust2 is built
 on top of umqtt.simple2 and adds auto-reconnect facilities for some of
 networking errors.
+
+Differences between umqtt.simple and umqtt.simple2
+--------------------------------------------------
+
+* works without blocking app
+* in case of network problems, it can send the data itself at a later time
+* we have the ability to track down errors
+* is larger than the previous one, so I recommend compiling this
+  library to MPY files (especially for esp8266)
+
+How and where to install this code?
+-----------------------------------
+This library requires the `micropython-umqtt.simple2` library ( https://github.com/fizista/micropython-umqtt.simple2 ).
+Therefore, please read this required library first,
+and then you can install this one.
+
+You can install using the upip:
+
+.. code-block:: python
+
+    import upip
+    upip.install("micropython-umqtt.robust2")
+
+or
+
+.. code-block:: bash
+
+    micropython -m upip install -p modules micropython-umqtt.robust2
+
+
+You can also clone this repository, and install it manually:
+
+.. code-block:: bash
+
+    git clone https://github.com/fizista/micropython-umqtt.robust2.git
+
+Manual installation gives you more possibilities:
+
+* You can compile this library into MPY files using the :bash:`compile.sh` script.
+* You can remove comments from the code with the command: :bash:`python setup.py minify`
+* You can of course copy the code as it is, if you don't mind.
+
+**Please note that the PyPi repositories contain optimized code (no comments).**
+
+**For more detailed information about API please see the source code
+(which is quite short and easy to review) and provided examples.**
 
 What does it mean to be "robust" ?
 ----------------------------------
@@ -34,6 +86,10 @@ lost reading is not a problem. Actually, if the sending device is
 battery-powered, any connection retries will just drain battery and
 make device "less robust" (it will run out of juice sooner and more
 unexpectedly, which may be a criteria for "robustness").
+
+We can also cache some of the results, as far as memory allows,
+until we try to connect again. This will increase the reliability
+of data delivery.
 
 2. If there's a button, which communicates its press event, then
 perhaps it's really worth to retry to deliver this event (a user
@@ -72,8 +128,9 @@ MQTT server in case of a connection error. As such, it's just one
 of many steps required to make your app robust, and majority of those
 steps lie on *your application* side. With that in mind, any realistic
 application would subclass umqtt.robust2.MQTTClient class and override
-delay() and reconnect() methods to suit particular usage scenario. It
-may even happen that umqtt.robust2 won't even suit your needs, and you
+add_msg_to_send() and reconnect() methods and will use the
+socket_timeout/message_timeout parameters to suit particular usage scenario.
+It may even happen that umqtt.robust2 won't even suit your needs, and you
 will need to implement your "robust" handling from scratch.
 
 
