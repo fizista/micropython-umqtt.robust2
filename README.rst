@@ -13,7 +13,7 @@ two submodules: umqtt.simple2 and umqtt.robust2. umqtt.robust2 is built
 on top of umqtt.simple2 and adds auto-reconnect facilities for some of
 networking errors.
 
-Differences between umqtt.simple and umqtt.simple2
+Differences between umqtt.robust and umqtt.robust2
 --------------------------------------------------
 
 * works without blocking app
