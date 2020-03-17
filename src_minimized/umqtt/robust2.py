@@ -31,7 +31,9 @@ class MQTTClient(simple2.MQTTClient):
 			D='?','connect','publish','subscribe','reconnect','sendqueue','disconnect','ping','wait_msg','keepalive';print('MQTT (%s): %r'%(D[C],B))
 	def reconnect(A,socket_timeout=-1):
 		try:B=super().connect(False,socket_timeout=socket_timeout);A.conn_issue=None;return B
-		except (OSError,simple2.MQTTException)as C:A.conn_issue=C,4
+		except (OSError,simple2.MQTTException)as C:
+			A.conn_issue=C,4
+			if A.sock:A.sock.close();A.sock=None
 	def add_msg_to_send(A,data):
 		A.msg_to_send.append(data)
 		if len(A.msg_to_send)>A.MSG_QUEUE_MAX:A.msg_to_send.pop(0)
