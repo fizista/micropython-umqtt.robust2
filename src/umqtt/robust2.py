@@ -259,7 +259,10 @@ class MQTTClient(simple2.MQTTClient):
         It is best to use this function with the reconnect() method to resume the connection when it is broken.
 
         You can also check the result of methods such as this:
-        `connect()`, `publish()`, `subscribe()`, `reconnect()`, `send_queue()`, `disconnect()`, `amping()`.
+        `connect()`, `publish()`, `subscribe()`, `reconnect()`, `send_queue()`, `disconnect()`, `ping()`, `wait_msg()`,
+        `check_msg()`, `is_keepalive()`.
+
+        The value of the last error is stored in self.conn_issue.
 
         :return: Connection problem
         :rtype: bool
@@ -273,9 +276,6 @@ class MQTTClient(simple2.MQTTClient):
     def wait_msg(self, socket_timeout=None):
         """
         See documentation for `umqtt.simple2.MQTTClient.wait_msg()`
-
-        The function tries to subscribe to the topic. If it fails,
-        the topic subscription goes into the subscription queue.
 
         Connection problems are captured and handled by `is_conn_issue()`
         """
