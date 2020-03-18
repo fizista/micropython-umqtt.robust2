@@ -23,6 +23,19 @@ class MQTTClient(simple2.MQTTClient):
         self.sub_to_confirm = {}  # Queue with a subscription list waiting for the server to confirm of the subscription
         self.conn_issue = None  # We store here if there is a connection problem.
 
+    def is_keepalive(self):
+        """
+        It checks if the connection is active. If the connection is not active at the specified time,
+        saves an error message and returns False.
+
+        :return: If the connection is not active at the specified time returns False otherwise True.
+        """
+        time_from__last_cpackage = ticks_diff(ticks_ms(), self.last_cpacket) // 1000
+        if 0 < self.keepalive < time_from__last_cpackage:
+            self.conn_issue = (simple2.MQTTException(7), 9)
+            return False
+        return True
+
     def set_callback_status(self, f):
         """
         See documentation for `umqtt.simple2.MQTTClient.set_callback_status()`
@@ -134,6 +147,8 @@ class MQTTClient(simple2.MQTTClient):
 
         Connection problems are captured and handled by `is_conn_issue()`
         """
+        if not self.is_keepalive():
+            return
         try:
             return super().ping(socket_timeout=socket_timeout)
         except (OSError, simple2.MQTTException) as e:
@@ -249,10 +264,7 @@ class MQTTClient(simple2.MQTTClient):
         :return: Connection problem
         :rtype: bool
         """
-        time_from__last_cpackage = ticks_diff(ticks_ms(), self.last_cpacket) // 1000
-
-        if 0 < self.keepalive < time_from__last_cpackage:
-            self.conn_issue = (simple2.MQTTException(7), 9)
+        self.is_keepalive()
 
         if self.conn_issue:
             self.log()
@@ -267,6 +279,7 @@ class MQTTClient(simple2.MQTTClient):
 
         Connection problems are captured and handled by `is_conn_issue()`
         """
+        self.is_keepalive()
         try:
             return super().wait_msg(socket_timeout)
         except (OSError, simple2.MQTTException) as e:
@@ -278,6 +291,7 @@ class MQTTClient(simple2.MQTTClient):
 
         Connection problems are captured and handled by `is_conn_issue()`
         """
+        self.is_keepalive()
         try:
             return super().check_msg()
         except (OSError, simple2.MQTTException) as e:
