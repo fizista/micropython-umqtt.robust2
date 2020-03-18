@@ -84,7 +84,7 @@ class MQTTClient(simple2.MQTTClient):
                 conn_issue = self.conn_issue
                 issue_place = 0
             place_str = ('?', 'connect', 'publish', 'subscribe',
-                         'reconnect', 'sendqueue', 'disconnect', 'ping', 'wait_msg', 'keepalive')
+                         'reconnect', 'sendqueue', 'disconnect', 'ping', 'wait_msg', 'keepalive', 'check_msg')
             print("MQTT (%s): %r" % (place_str[issue_place], conn_issue))
 
     def reconnect(self, socket_timeout=-1):
@@ -271,3 +271,14 @@ class MQTTClient(simple2.MQTTClient):
             return super().wait_msg(socket_timeout)
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 8)
+
+    def check_msg(self):
+        """
+        See documentation for `umqtt.simple2.MQTTClient.check_msg()`
+
+        Connection problems are captured and handled by `is_conn_issue()`
+        """
+        try:
+            return super().check_msg()
+        except (OSError, simple2.MQTTException) as e:
+            self.conn_issue = (e, 10)
