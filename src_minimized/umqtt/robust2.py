@@ -3,6 +3,10 @@ from .  import simple2
 class MQTTClient(simple2.MQTTClient):
 	DEBUG=False;KEEP_QOS0=True;NO_QUEUE_DUPS=True;MSG_QUEUE_MAX=5
 	def __init__(A,*B,**C):super().__init__(*B,**C);A.msg_to_send=[];A.sub_to_send=[];A.msg_to_confirm={};A.sub_to_confirm={};A.conn_issue=None
+	def is_keepalive(A):
+		B=ticks_diff(ticks_ms(),A.last_cpacket)//1000
+		if 0<A.keepalive<B:A.conn_issue=simple2.MQTTException(7),9;return False
+		return True
 	def set_callback_status(A,f):A._cbstat=f
 	def cbstat(A,pid,stat):
 		E=stat;C=pid
@@ -28,7 +32,7 @@ class MQTTClient(simple2.MQTTClient):
 		if A.DEBUG:
 			if type(A.conn_issue)is tuple:B,C=A.conn_issue
 			else:B=A.conn_issue;C=0
-			D='?','connect','publish','subscribe','reconnect','sendqueue','disconnect','ping','wait_msg','keepalive';print('MQTT (%s): %r'%(D[C],B))
+			D='?','connect','publish','subscribe','reconnect','sendqueue','disconnect','ping','wait_msg','keepalive','check_msg';print('MQTT (%s): %r'%(D[C],B))
 	def reconnect(A,socket_timeout=-1):
 		try:B=super().connect(False,socket_timeout=socket_timeout);A.conn_issue=None;return B
 		except (OSError,simple2.MQTTException)as C:
@@ -41,6 +45,7 @@ class MQTTClient(simple2.MQTTClient):
 		try:return super().disconnect(socket_timeout=socket_timeout)
 		except (OSError,simple2.MQTTException)as B:A.conn_issue=B,6
 	def ping(A,socket_timeout=-1):
+		if not A.is_keepalive():return
 		try:return super().ping(socket_timeout=socket_timeout)
 		except (OSError,simple2.MQTTException)as B:A.conn_issue=B,7
 	def publish(A,topic,msg,retain=False,qos=0,socket_timeout=-1):
@@ -80,10 +85,14 @@ class MQTTClient(simple2.MQTTClient):
 			except (OSError,simple2.MQTTException)as G:A.conn_issue=G,5;return False
 		A.sub_to_send[:]=[B for B in A.sub_to_send if B not in I];return True
 	def is_conn_issue(A):
-		B=ticks_diff(ticks_ms(),A.last_cpacket)//1000
-		if 0<A.keepalive<B:A.conn_issue=simple2.MQTTException(7),9
+		A.is_keepalive()
 		if A.conn_issue:A.log()
 		return bool(A.conn_issue)
 	def wait_msg(A,socket_timeout=None):
+		A.is_keepalive()
 		try:return super().wait_msg(socket_timeout)
 		except (OSError,simple2.MQTTException)as B:A.conn_issue=B,8
+	def check_msg(A):
+		A.is_keepalive()
+		try:return super().check_msg()
+		except (OSError,simple2.MQTTException)as B:A.conn_issue=B,10
