@@ -10,12 +10,20 @@ umqtt.robust2
 umqtt.robust2 is a MQTT client for MicroPython. (Note that it uses some
 MicroPython shortcuts and doesn't work with CPython). It consists of
 two submodules: umqtt.simple2 and umqtt.robust2. umqtt.robust2 is built
-on top of umqtt.simple2 and adds auto-reconnect facilities for some of
-networking errors.
+on top of umqtt.simple2.
+
+Features of this library
+------------------------
+* allows you to resume connection with the MQTT broker
+* allows you to send unsent messages when you resume a connection
+* allows you to subscribe to all previously subscribed topics once the connection is resumed
+* is resistant to errors in connections
+* you have clear information about the type of errors
 
 Differences between umqtt.robust and umqtt.robust2
 --------------------------------------------------
 
+* allows for easy programming of different strategies to maintain communication with the MQTT broker
 * works without blocking app
 * in case of network problems, it can send the data itself at a later time
 * we have the ability to track down errors
