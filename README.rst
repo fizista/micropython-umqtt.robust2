@@ -9,8 +9,8 @@ umqtt.robust2
 
 umqtt.robust2 is a MQTT client for MicroPython. (Note that it uses some
 MicroPython shortcuts and doesn't work with CPython). It consists of
-two submodules: umqtt.simple2 and umqtt.robust2. umqtt.robust2 is built
-on top of umqtt.simple2.
+two submodules: umqtt.simple2_ and umqtt.robust2_. umqtt.robust2_ is built
+on top of umqtt.simple2_.
 
 Features of this library
 ------------------------
@@ -32,7 +32,7 @@ Differences between umqtt.robust and umqtt.robust2
 
 How and where to install this code?
 -----------------------------------
-This library requires the `micropython-umqtt.simple2` library ( https://github.com/fizista/micropython-umqtt.simple2 ).
+This library requires the umqtt.simple2_ library.
 Therefore, please read this required library first,
 and then you can install this one.
 
@@ -173,3 +173,7 @@ However, not all broker offer true, persistent MQTT support:
   their free/inexpensive tiers. Persistence and QoS are features usually
   not supported. It's hard to achieve any true robustness with these
   demo-like offerings, and umqtt.robust2 isn't designed to work with them.
+
+
+.. _umqtt.simple2: https://github.com/fizista/micropython-umqtt.simple2
+.. _umqtt.robust2: https://github.com/fizista/micropython-umqtt.robust2
