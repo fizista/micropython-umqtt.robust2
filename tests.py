@@ -61,6 +61,24 @@ class MQTTClient(_MQTTClient):
         debug_func_name('wait_msg')
         return super().wait_msg(*a, **k)
 
+    def send_queue(self, *a, **k):
+        debug_func_name('send_queue')
+        out = super().send_queue(*a, **k)
+        self.is_conn_issue()
+        return out
+
+    def connect(self, *a, **k):
+        debug_func_name('connect')
+        out = super().connect(*a, **k)
+        self.is_conn_issue()
+        return out
+
+    def reconnect(self, *a, **k):
+        debug_func_name('reconnect')
+        out = super().reconnect(*a, **k)
+        self.is_conn_issue()
+        return out
+
 
 class TestMQTT:
     def __init__(self, *args, **kwargs):
