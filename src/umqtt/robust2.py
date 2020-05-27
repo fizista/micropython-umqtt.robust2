@@ -11,12 +11,15 @@ class MQTTClient(simple2.MQTTClient):
     NO_QUEUE_DUPS = True
     # Limit the number of unsent messages in the queue.
     MSG_QUEUE_MAX = 5
+    # When you reconnect, all existing subscriptions are renewed.
+    RESUBSCRIBE = True
 
     def __init__(self, *args, **kwargs):
         """
         See documentation for `umqtt.simple2.MQTTClient.__init__()`
         """
         super().__init__(*args, **kwargs)
+        self.subs = []  # List of stored subscriptions
         self.msg_to_send = []  # Queue with list of messages to send
         self.sub_to_send = []  # Queue with list of subscriptions to send
         self.msg_to_confirm = {}  # Queue with a list of messages waiting for the server to confirm of the message.
@@ -116,6 +119,15 @@ class MQTTClient(simple2.MQTTClient):
                 self.sock.close()
                 self.sock = None
 
+    def resubscribe(self):
+        """
+        Function from previously registered subscriptions, sends them again to the server.
+
+        :return:
+        """
+        for topic, qos in self.subs:
+            self.subscribe(topic, qos, False)
+
     def add_msg_to_send(self, data):
         """
         By overwriting this method, you can control the amount of stored data in the queue.
@@ -193,7 +205,7 @@ class MQTTClient(simple2.MQTTClient):
             elif qos == 1:
                 self.add_msg_to_send(data)
 
-    def subscribe(self, topic, qos=0):
+    def subscribe(self, topic, qos=0, resubscribe=True):
         """
         See documentation for `umqtt.simple2.MQTTClient.subscribe()`
 
@@ -201,8 +213,14 @@ class MQTTClient(simple2.MQTTClient):
         the topic subscription goes into the subscription queue.
 
         Connection problems are captured and handled by `is_conn_issue()`
+
         """
         data = (topic, qos)
+
+        if self.RESUBSCRIBE and resubscribe:
+            if topic not in dict(self.subs):
+                self.subs.append(data)
+
         # We delete all previous subscriptions for the same topic from the queue.
         # The most important is the last subscription.
         self.sub_to_send[:] = [s for s in self.sub_to_send if topic != s[0]]

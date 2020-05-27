@@ -49,9 +49,12 @@ while 1:
     # At this point in the code you must consider how to handle
     # connection errors.  And how often to resume the connection.
     if c.is_conn_issue():
-        # If the connection is successful, the is_conn_issue
-        # method will not return a connection error.
-        c.reconnect()
+        while c.is_conn_issue():
+            # If the connection is successful, the is_conn_issue
+            # method will not return a connection error.
+            c.reconnect()
+        else:
+            c.resubscribe()
 
     c.check_msg() # needed when publish(qos=1), ping(), subscribe()
     c.send_queue()  # needed when using the caching capabilities for unsent messages
