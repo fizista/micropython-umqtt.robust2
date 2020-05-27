@@ -22,6 +22,7 @@ def debug_func_name(f_name):
 class MQTTClient(_MQTTClient):
     DEBUG = 1
     MAX_DBG_LEN = 80
+    MSG_QUEUE_MAX = 3
 
     def _read(self, n):
         out = super()._read(n)
@@ -163,7 +164,8 @@ class TestMQTT:
             'test_publish_qos_0',
             'test_publish_qos_1',
             'test_subscribe',
-            'test_keepalive'
+            'test_keepalive',
+            'test_queue_max'
         ]
         for test_name in tests:
             if not self.run_test(test_name):
@@ -290,3 +292,13 @@ class TestMQTT:
         utime.sleep(3)
         assert c.is_conn_issue()
         c.disconnect()
+
+    def test_queue_max(self, topic):
+        c = self.init_mqtt_client()
+        c.add_msg_to_send((1, 'x', 'y'))
+        c.add_msg_to_send((2, 'x', 'y'))
+        c.add_msg_to_send((3, 'x', 'y'))
+        c.add_msg_to_send((4, 'x', 'y'))
+        print(c.msg_to_send)
+        assert len(c.msg_to_send) == 3
+        assert c.msg_to_send[-1] == (4, 'x', 'y')

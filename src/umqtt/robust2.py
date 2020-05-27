@@ -57,7 +57,7 @@ class MQTTClient(simple2.MQTTClient):
         for data, pids in self.msg_to_confirm.items():
             if pid in pids:
                 if stat == 0:
-                    self.msg_to_send.append(data)
+                    self.msg_to_send.insert(0, data)
                 pids.remove(pid)
                 if not pids:
                     self.msg_to_confirm.pop(data)
@@ -123,11 +123,13 @@ class MQTTClient(simple2.MQTTClient):
 
         Currently, this method limits the queue length to MSG_QUEUE_MAX messages.
 
+        The number of active messages is the sum of messages to be sent with messages awaiting confirmation.
+
         :param data:
         :return:
         """
         self.msg_to_send.append(data)
-        if len(self.msg_to_send) > self.MSG_QUEUE_MAX:
+        if (len(self.msg_to_send) + len(self.msg_to_confirm)) > self.MSG_QUEUE_MAX:
             self.msg_to_send.pop(0)
 
     def disconnect(self, socket_timeout=-1):
@@ -187,9 +189,9 @@ class MQTTClient(simple2.MQTTClient):
                 if data in self.msg_to_send:
                     return
             if self.KEEP_QOS0 and qos == 0:
-                self.msg_to_send.append(data)
+                self.add_msg_to_send(data)
             elif qos == 1:
-                self.msg_to_send.append(data)
+                self.add_msg_to_send(data)
 
     def subscribe(self, topic, qos=0, socket_timeout=-1):
         """
