@@ -71,7 +71,7 @@ class MQTTClient(simple2.MQTTClient):
                 if not pids:
                     self.sub_to_confirm.pop(data)
 
-    def connect(self, clean_session=True, socket_timeout=-1):
+    def connect(self, clean_session=True):
         """
         See documentation for `umqtt.simple2.MQTTClient.connect()`.
 
@@ -83,7 +83,7 @@ class MQTTClient(simple2.MQTTClient):
             self.msg_to_send[:] = []
             self.msg_to_confirm.clear()
         try:
-            out = super().connect(clean_session, socket_timeout)
+            out = super().connect(clean_session)
             self.conn_issue = None
             return out
         except (OSError, simple2.MQTTException) as e:
@@ -100,14 +100,14 @@ class MQTTClient(simple2.MQTTClient):
                          'reconnect', 'sendqueue', 'disconnect', 'ping', 'wait_msg', 'keepalive', 'check_msg')
             print("MQTT (%s): %r" % (place_str[issue_place], conn_issue))
 
-    def reconnect(self, socket_timeout=-1):
+    def reconnect(self):
         """
         The function tries to resume the connection.
 
         Connection problems are captured and handled by `is_conn_issue()`
         """
         try:
-            out = super().connect(False, socket_timeout=socket_timeout)
+            out = super().connect(False)
             self.conn_issue = None
             return out
         except (OSError, simple2.MQTTException) as e:
@@ -132,18 +132,18 @@ class MQTTClient(simple2.MQTTClient):
         if (len(self.msg_to_send) + len(self.msg_to_confirm)) > self.MSG_QUEUE_MAX:
             self.msg_to_send.pop(0)
 
-    def disconnect(self, socket_timeout=-1):
+    def disconnect(self):
         """
         See documentation for `umqtt.simple2.MQTTClient.disconnect()`
 
         Connection problems are captured and handled by `is_conn_issue()`
         """
         try:
-            return super().disconnect(socket_timeout=socket_timeout)
+            return super().disconnect()
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 6)
 
-    def ping(self, socket_timeout=-1):
+    def ping(self):
         """
         See documentation for `umqtt.simple2.MQTTClient.ping()`
 
@@ -152,11 +152,11 @@ class MQTTClient(simple2.MQTTClient):
         if not self.is_keepalive():
             return
         try:
-            return super().ping(socket_timeout=socket_timeout)
+            return super().ping()
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 7)
 
-    def publish(self, topic, msg, retain=False, qos=0, socket_timeout=-1):
+    def publish(self, topic, msg, retain=False, qos=0):
         """
         See documentation for `umqtt.simple2.MQTTClient.publish()`
 
@@ -176,7 +176,7 @@ class MQTTClient(simple2.MQTTClient):
             # Only the last message with this flag is relevant.
             self.msg_to_send[:] = [m for m in self.msg_to_send if not (topic == m[0] and retain == m[2])]
         try:
-            out = super().publish(topic, msg, retain, qos, False, socket_timeout)
+            out = super().publish(topic, msg, retain, qos, False)
             if qos == 1:
                 # We postpone the message in case it is not delivered to the server.
                 # We will delete it when we receive a receipt.
@@ -193,7 +193,7 @@ class MQTTClient(simple2.MQTTClient):
             elif qos == 1:
                 self.add_msg_to_send(data)
 
-    def subscribe(self, topic, qos=0, socket_timeout=-1):
+    def subscribe(self, topic, qos=0):
         """
         See documentation for `umqtt.simple2.MQTTClient.subscribe()`
 
@@ -207,7 +207,7 @@ class MQTTClient(simple2.MQTTClient):
         # The most important is the last subscription.
         self.sub_to_send[:] = [s for s in self.sub_to_send if topic != s[0]]
         try:
-            out = super().subscribe(topic, qos, socket_timeout)
+            out = super().subscribe(topic, qos)
             self.sub_to_confirm.setdefault(data, []).append(out)
             return out
         except (OSError, simple2.MQTTException) as e:
@@ -217,7 +217,7 @@ class MQTTClient(simple2.MQTTClient):
                     return
             self.sub_to_send.append(data)
 
-    def send_queue(self, socket_timeout=-1):
+    def send_queue(self):
         """
         The function tries to send all messages and subscribe to all topics that are in the queue to send.
 
@@ -228,7 +228,7 @@ class MQTTClient(simple2.MQTTClient):
         for data in self.msg_to_send:
             topic, msg, retain, qos = data
             try:
-                out = super().publish(topic, msg, retain, qos, False, socket_timeout)
+                out = super().publish(topic, msg, retain, qos, False)
                 if qos == 1:
                     # We postpone the message in case it is not delivered to the server.
                     # We will delete it when we receive a receipt.
@@ -244,7 +244,7 @@ class MQTTClient(simple2.MQTTClient):
         for data in self.sub_to_send:
             topic, qos = data
             try:
-                out = super().subscribe(topic, qos, socket_timeout)
+                out = super().subscribe(topic, qos)
                 self.sub_to_confirm.setdefault(data, []).append(out)
                 sub_to_del.append(data)
             except (OSError, simple2.MQTTException) as e:
@@ -275,7 +275,7 @@ class MQTTClient(simple2.MQTTClient):
             self.log()
         return bool(self.conn_issue)
 
-    def wait_msg(self, socket_timeout=None):
+    def wait_msg(self):
         """
         See documentation for `umqtt.simple2.MQTTClient.wait_msg()`
 
@@ -283,7 +283,7 @@ class MQTTClient(simple2.MQTTClient):
         """
         self.is_keepalive()
         try:
-            return super().wait_msg(socket_timeout)
+            return super().wait_msg()
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 8)
 
