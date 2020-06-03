@@ -86,9 +86,8 @@ class MQTTClient(simple2.MQTTClient):
             self.msg_to_send[:] = []
             self.msg_to_confirm.clear()
         try:
-            out = super().connect(clean_session)
             self.conn_issue = None
-            return out
+            return super().connect(clean_session)
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 1)
 
@@ -110,9 +109,8 @@ class MQTTClient(simple2.MQTTClient):
         Connection problems are captured and handled by `is_conn_issue()`
         """
         try:
-            out = super().connect(False)
             self.conn_issue = None
-            return out
+            return super().connect(False)
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 4)
             if self.sock:
@@ -185,8 +183,11 @@ class MQTTClient(simple2.MQTTClient):
         data = (topic, msg, retain, qos)
         if retain:
             # We delete all previous messages for this topic with the retain flag set to True.
-            # Only the last message with this flag is relevant.
-            self.msg_to_send[:] = [m for m in self.msg_to_send if not (topic == m[0] and retain == m[2])]
+                    # Only the last message with this flag is relevant.
+            self.msg_to_send[:] = [
+                m for m in self.msg_to_send if topic != m[0] or retain != m[2]
+            ]
+
         try:
             out = super().publish(topic, msg, retain, qos, False)
             if qos == 1:
@@ -197,9 +198,8 @@ class MQTTClient(simple2.MQTTClient):
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 2)
             # If the message cannot be sent, we put it in the queue to try to resend it.
-            if self.NO_QUEUE_DUPS:
-                if data in self.msg_to_send:
-                    return
+            if self.NO_QUEUE_DUPS and data in self.msg_to_send:
+                return
             if self.KEEP_QOS0 and qos == 0:
                 self.add_msg_to_send(data)
             elif qos == 1:
@@ -217,9 +217,8 @@ class MQTTClient(simple2.MQTTClient):
         """
         data = (topic, qos)
 
-        if self.RESUBSCRIBE and resubscribe:
-            if topic not in dict(self.subs):
-                self.subs.append(data)
+        if self.RESUBSCRIBE and resubscribe and topic not in dict(self.subs):
+            self.subs.append(data)
 
         # We delete all previous subscriptions for the same topic from the queue.
         # The most important is the last subscription.
@@ -230,9 +229,8 @@ class MQTTClient(simple2.MQTTClient):
             return out
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 3)
-            if self.NO_QUEUE_DUPS:
-                if data in self.sub_to_send:
-                    return
+            if self.NO_QUEUE_DUPS and data in self.sub_to_send:
+                return
             self.sub_to_send.append(data)
 
     def send_queue(self):

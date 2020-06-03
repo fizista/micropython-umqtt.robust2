@@ -64,15 +64,14 @@ class MQTTClient(simple2.MQTTClient):
 			if A.KEEP_QOS0 and B==0:A.add_msg_to_send(D)
 			elif B==1:A.add_msg_to_send(D)
 	def subscribe(A,topic,qos=0,resubscribe=True):
-		B=topic;C=B,qos
-		if A.RESUBSCRIBE and resubscribe:
-			if B not in dict(A.subs):A.subs.append(C)
+		B=topic
+		C=B,qos
+		if A.RESUBSCRIBE and resubscribe and B not in dict(A.subs):A.subs.append(C)
 		A.sub_to_send[:]=[C for C in A.sub_to_send if B!=C[0]]
 		try:D=super().subscribe(B,qos);A.sub_to_confirm.setdefault(C,[]).append(D);return D
-		except (OSError,simple2.MQTTException)as E:
+		except (OSError,simple2.MQTTException) as E:
 			A.conn_issue=E,3
-			if A.NO_QUEUE_DUPS:
-				if C in A.sub_to_send:return
+			if A.NO_QUEUE_DUPS and C in A.sub_to_send:return
 			A.sub_to_send.append(C)
 	def send_queue(A):
 		D=[]
