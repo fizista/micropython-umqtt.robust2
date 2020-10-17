@@ -303,3 +303,24 @@ class TestMQTT:
         print(c.msg_to_send)
         assert len(c.msg_to_send) == 3
         assert c.msg_to_send[-1] == (4, 'x', 'y')
+        c.msg_to_confirm = {
+            (2, 'x', 'y'): [1, 2]
+        }
+        c.add_msg_to_send((5, 'x', 'y'))
+        assert len(c.msg_to_send) == 3
+        assert c.msg_to_send[-3] == (3, 'x', 'y')
+        assert c.msg_to_send[-2] == (4, 'x', 'y')
+        assert c.msg_to_send[-1] == (5, 'x', 'y')
+        assert len(c.msg_to_confirm) == 0
+        c.msg_to_confirm = {
+            (3, 'x', 'y'): [3],
+            (4, 'x', 'y'): [2]
+        }
+        c.msg_to_send.pop(0)
+        c.msg_to_send.pop(0)
+        c.add_msg_to_send((6, 'x', 'y'))
+        assert len(c.msg_to_send) == 2
+        assert c.msg_to_send[-2] == (5, 'x', 'y')
+        assert c.msg_to_send[-1] == (6, 'x', 'y')
+        assert len(c.msg_to_confirm) == 1
+        assert c.msg_to_confirm[(3, 'x', 'y')] == [3]

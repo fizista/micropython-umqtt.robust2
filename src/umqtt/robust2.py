@@ -140,9 +140,27 @@ class MQTTClient(simple2.MQTTClient):
         :param data:
         :return:
         """
+        # Before we add data to the queue, it is necessary to release the memory first.
+        # Otherwise, we may fall into an infinite loop due to a lack of available memory.
+        messages_count = len(self.msg_to_send)
+        messages_count += sum(map(len, self.msg_to_confirm.values()))
+
+        while messages_count >= self.MSG_QUEUE_MAX:
+            min_msg_to_confirm = min(map(lambda x: x[0] if x else 65535, self.msg_to_confirm.values()), default=0)
+            if 0 < min_msg_to_confirm < 65535:
+                key_to_check = None
+                for k, v in self.msg_to_confirm.items():
+                    if v and v[0] == min_msg_to_confirm:
+                        del v[0]
+                        key_to_check = k
+                        break
+                if key_to_check and key_to_check in self.msg_to_confirm and not self.msg_to_confirm[key_to_check]:
+                    self.msg_to_confirm.pop(key_to_check)
+            else:
+                self.msg_to_send.pop(0)
+            messages_count -= 1
+
         self.msg_to_send.append(data)
-        if (len(self.msg_to_send) + len(self.msg_to_confirm)) > self.MSG_QUEUE_MAX:
-            self.msg_to_send.pop(0)
 
     def disconnect(self):
         """
