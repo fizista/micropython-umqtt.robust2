@@ -30,6 +30,21 @@ Differences between umqtt.robust and umqtt.robust2
 * is larger than the previous one, so I recommend compiling this
   library to MPY files (especially for esp8266)
 
+Problems and solutions
+----------------------
+* ImportError: no module named 'umqtt.robust2'
+
+  Versions of micropython from http://micropython.org/download/ since version 1.12 include
+  the umqtt library, which conflicts with the current library.
+  To avoid conflicts, you need to change the order of importing libraries.
+  You need to import the '/lib' libraries first and then the system libraries.
+  Just add the following lines of code to the boot.py file:
+
+.. code-block:: python
+
+    import sys
+    sys.path.reverse()
+
 How and where to install this code?
 -----------------------------------
 This library requires the umqtt.simple2_ library.
