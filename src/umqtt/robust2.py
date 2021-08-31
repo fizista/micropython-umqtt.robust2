@@ -19,11 +19,15 @@ class MQTTClient(simple2.MQTTClient):
         See documentation for `umqtt.simple2.MQTTClient.__init__()`
         """
         super().__init__(*args, **kwargs)
-        self.subs = []  # List of stored subscriptions
-        self.msg_to_send = []  # Queue with list of messages to send
-        self.sub_to_send = []  # Queue with list of subscriptions to send
-        self.msg_to_confirm = {}  # Queue with a list of messages waiting for the server to confirm of the message.
-        self.sub_to_confirm = {}  # Queue with a subscription list waiting for the server to confirm of the subscription
+        self.subs = []  # List of stored subscriptions [ (topic, qos), ...]
+        # Queue with list of messages to send
+        self.msg_to_send = []  # [(topic, msg, retain, qos), (topic, msg, retain, qos), ... ]
+        # Queue with list of subscriptions to send
+        self.sub_to_send = []  # [(topic, qos), ...]
+        # Queue with a list of messages waiting for the server to confirm of the message.
+        self.msg_to_confirm = {}  # {(topic, msg, retain, qos): [pid, pid, ...]
+        # Queue with a subscription list waiting for the server to confirm of the subscription
+        self.sub_to_confirm = {}  # {(topic, qos): [pid, pid, ...]}
         self.conn_issue = None  # We store here if there is a connection problem.
 
     def is_keepalive(self):
