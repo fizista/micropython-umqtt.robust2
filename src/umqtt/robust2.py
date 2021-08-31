@@ -64,18 +64,26 @@ class MQTTClient(simple2.MQTTClient):
         for data, pids in self.msg_to_confirm.items():
             if pid in pids:
                 if stat == 0:
-                    self.msg_to_send.insert(0, data)
-                pids.remove(pid)
-                if not pids:
+                    if data not in self.msg_to_send:
+                        self.msg_to_send.insert(0, data)
+                    pids.remove(pid)
+                    if not pids:
+                        self.msg_to_confirm.pop(data)
+                elif stat in (1, 2):
+                    # A message has been delivered at least once, so we are not waiting for other confirmations
                     self.msg_to_confirm.pop(data)
                 return
 
         for data, pids in self.sub_to_confirm.items():
             if pid in pids:
                 if stat == 0:
-                    self.sub_to_send.append(data)
-                pids.remove(pid)
-                if not pids:
+                    if data not in self.sub_to_send:
+                        self.sub_to_send.append(data)
+                    pids.remove(pid)
+                    if not pids:
+                        self.sub_to_confirm.pop(data)
+                elif stat in (1, 2):
+                    # A message has been delivered at least once, so we are not waiting for other confirmations
                     self.sub_to_confirm.pop(data)
 
     def connect(self, clean_session=True):

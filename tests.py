@@ -161,6 +161,7 @@ class TestMQTT:
     def run(self):
         test_fails = []
         tests = [
+            'test_cbstat',
             'test_publish_qos_0',
             'test_publish_qos_1',
             'test_subscribe',
@@ -197,6 +198,46 @@ class TestMQTT:
             test_pass = False
         print('END [%s] %s\n' % (test_name, 'succes' if test_pass else 'FAIL'))
         return test_pass
+
+    def test_cbstat(self, topic):
+
+        self.client.msg_to_confirm = {('top1', 'msg11', False, 0): [1, 2, 3]}
+        self.client.msg_to_send = []
+        self.client.cbstat(1, 0)
+        assert self.client.msg_to_send == [('top1', 'msg11', False, 0)]
+        assert self.client.msg_to_confirm == {('top1', 'msg11', False, 0): [2, 3]}
+        self.client.cbstat(2, 0)
+        assert self.client.msg_to_send == [('top1', 'msg11', False, 0)]
+        assert self.client.msg_to_confirm == {('top1', 'msg11', False, 0): [3]}
+        self.client.cbstat(3, 0)
+        assert self.client.msg_to_send == [('top1', 'msg11', False, 0)]
+        assert self.client.msg_to_confirm == {}
+
+        self.client.msg_to_confirm = {('top1', 'msg11', False, 0): [1, 2, 3]}
+        self.client.msg_to_send = []
+        self.client.cbstat(2, 1)
+        assert self.client.msg_to_send == []
+        assert self.client.msg_to_confirm == {}
+
+        self.client.sub_to_send = []
+        self.client.sub_to_confirm = {('stop1', 0): [10, 11, 12]}
+        self.client.cbstat(10, 0)
+        assert self.client.sub_to_send == [('stop1', 0)]
+        assert self.client.sub_to_confirm == {('stop1', 0): [11, 12]}
+        self.client.cbstat(11, 0)
+        assert self.client.sub_to_send == [('stop1', 0)]
+        assert self.client.sub_to_confirm == {('stop1', 0): [12]}
+        self.client.cbstat(12, 0)
+        assert self.client.sub_to_send == [('stop1', 0)]
+        assert self.client.sub_to_confirm == {}
+
+        self.client.sub_to_confirm = {('stop1', 0): [10, 11, 12]}
+        self.client.sub_to_send = []
+        self.client.cbstat(11, 1)
+        assert self.client.sub_to_send == []
+        assert self.client.sub_to_confirm == {}
+
+        self.client.disconnect()
 
     def test_publish_qos_0(self, topic):
         self.client.connect()
