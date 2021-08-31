@@ -11,6 +11,8 @@ class MQTTClient(simple2.MQTTClient):
     NO_QUEUE_DUPS = True
     # Limit the number of unsent messages in the queue.
     MSG_QUEUE_MAX = 5
+    # How many PIDs we store for a sent message
+    CONFIRM_QUEUE_MAX = 10
     # When you reconnect, all existing subscriptions are renewed.
     RESUBSCRIBE = True
 
@@ -223,6 +225,9 @@ class MQTTClient(simple2.MQTTClient):
                 # We postpone the message in case it is not delivered to the server.
                 # We will delete it when we receive a receipt.
                 self.msg_to_confirm.setdefault(data, []).append(out)
+                if len(self.msg_to_confirm[data]) > self.CONFIRM_QUEUE_MAX:
+                    self.msg_to_confirm.pop(0)
+
             return out
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 2)
@@ -257,6 +262,8 @@ class MQTTClient(simple2.MQTTClient):
         try:
             out = super().subscribe(topic, qos)
             self.sub_to_confirm.setdefault(data, []).append(out)
+            if len(self.sub_to_confirm[data]) > self.CONFIRM_QUEUE_MAX:
+                self.sub_to_confirm.pop(0)
             return out
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 3)
