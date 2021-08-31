@@ -320,6 +320,10 @@ class TestMQTT:
 
         self.client.disconnect()
 
+    def test_resubscribe(self, topic):
+        # TODO: Test re-subscription . This is currently not working.
+        pass
+
     def test_keepalive(self, topic):
         c = self.init_mqtt_client(mqtt_kwargs={'keepalive': 3})
         c.connect()  # 3 sec
