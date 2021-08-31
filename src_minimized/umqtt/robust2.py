@@ -1,7 +1,7 @@
 from utime import ticks_ms,ticks_diff
 from .  import simple2
 class MQTTClient(simple2.MQTTClient):
-	DEBUG=False;KEEP_QOS0=True;NO_QUEUE_DUPS=True;MSG_QUEUE_MAX=5;RESUBSCRIBE=True
+	DEBUG=False;KEEP_QOS0=True;NO_QUEUE_DUPS=True;MSG_QUEUE_MAX=5;CONFIRM_QUEUE_MAX=10;RESUBSCRIBE=True
 	def __init__(A,*B,**C):super().__init__(*B,**C);A.subs=[];A.msg_to_send=[];A.sub_to_send=[];A.msg_to_confirm={};A.sub_to_confirm={};A.conn_issue=None
 	def is_keepalive(A):
 		B=ticks_diff(ticks_ms(),A.last_cpacket)//1000
@@ -9,20 +9,24 @@ class MQTTClient(simple2.MQTTClient):
 		return True
 	def set_callback_status(A,f):A._cbstat=f
 	def cbstat(A,pid,stat):
-		E=stat;C=pid
-		try:A._cbstat(C,E)
+		E=stat;D=pid
+		try:A._cbstat(D,E)
 		except AttributeError:pass
-		for (D,B) in A.msg_to_confirm.items():
-			if C in B:
-				if E==0:A.msg_to_send.insert(0,D)
-				B.remove(C)
-				if not B:A.msg_to_confirm.pop(D)
+		for (B,C) in A.msg_to_confirm.items():
+			if D in C:
+				if E==0:
+					if B not in A.msg_to_send:A.msg_to_send.insert(0,B)
+					C.remove(D)
+					if not C:A.msg_to_confirm.pop(B)
+				elif E in(1,2):A.msg_to_confirm.pop(B)
 				return
-		for (D,B) in A.sub_to_confirm.items():
-			if C in B:
-				if E==0:A.sub_to_send.append(D)
-				B.remove(C)
-				if not B:A.sub_to_confirm.pop(D)
+		for (B,C) in A.sub_to_confirm.items():
+			if D in C:
+				if E==0:
+					if B not in A.sub_to_send:A.sub_to_send.append(B)
+					C.remove(D)
+					if not C:A.sub_to_confirm.pop(B)
+				elif E in(1,2):A.sub_to_confirm.pop(B)
 	def connect(A,clean_session=True):
 		B=clean_session
 		if B:A.msg_to_send[:]=[];A.msg_to_confirm.clear()
@@ -41,8 +45,17 @@ class MQTTClient(simple2.MQTTClient):
 	def resubscribe(A):
 		for (B,C) in A.subs:A.subscribe(B,C,False)
 	def add_msg_to_send(A,data):
+		C=len(A.msg_to_send);C+=sum(map(len,A.msg_to_confirm.values()))
+		while C>=A.MSG_QUEUE_MAX:
+			E=min(map(lambda x:x[0]if x else 65535,A.msg_to_confirm.values()),default=0)
+			if 0<E<65535:
+				B=None
+				for (F,D) in A.msg_to_confirm.items():
+					if D and D[0]==E:del D[0];B=F;break
+				if B and B in A.msg_to_confirm and not A.msg_to_confirm[B]:A.msg_to_confirm.pop(B)
+			else:A.msg_to_send.pop(0)
+			C-=1
 		A.msg_to_send.append(data)
-		if len(A.msg_to_send)+len(A.msg_to_confirm)>A.MSG_QUEUE_MAX:A.msg_to_send.pop(0)
 	def disconnect(A):
 		try:return super().disconnect()
 		except (OSError,simple2.MQTTException)as B:A.conn_issue=B,6
@@ -51,29 +64,34 @@ class MQTTClient(simple2.MQTTClient):
 		try:return super().ping()
 		except (OSError,simple2.MQTTException)as B:A.conn_issue=B,7
 	def publish(A,topic,msg,retain=False,qos=0):
-		E=topic;C=retain;B=qos;D=E,msg,C,B
-		if C:A.msg_to_send[:]=[B for B in A.msg_to_send if not(E==B[0]and C==B[2])]
+		E=topic;D=retain;B=qos;C=E,msg,D,B
+		if D:A.msg_to_send[:]=[B for B in A.msg_to_send if not(E==B[0]and D==B[2])]
 		try:
-			F=super().publish(E,msg,C,B,False)
-			if B==1:A.msg_to_confirm.setdefault(D,[]).append(F)
+			F=super().publish(E,msg,D,B,False)
+			if B==1:
+				A.msg_to_confirm.setdefault(C,[]).append(F)
+				if len(A.msg_to_confirm[C])>A.CONFIRM_QUEUE_MAX:A.msg_to_confirm.pop(0)
 			return F
 		except (OSError,simple2.MQTTException)as G:
 			A.conn_issue=G,2
 			if A.NO_QUEUE_DUPS:
-				if D in A.msg_to_send:return
-			if A.KEEP_QOS0 and B==0:A.add_msg_to_send(D)
-			elif B==1:A.add_msg_to_send(D)
+				if C in A.msg_to_send:return
+			if A.KEEP_QOS0 and B==0:A.add_msg_to_send(C)
+			elif B==1:A.add_msg_to_send(C)
 	def subscribe(A,topic,qos=0,resubscribe=True):
-		B=topic;C=B,qos
+		C=topic;B=C,qos
 		if A.RESUBSCRIBE and resubscribe:
-			if B not in dict(A.subs):A.subs.append(C)
-		A.sub_to_send[:]=[C for C in A.sub_to_send if B!=C[0]]
-		try:D=super().subscribe(B,qos);A.sub_to_confirm.setdefault(C,[]).append(D);return D
+			if C not in dict(A.subs):A.subs.append(B)
+		A.sub_to_send[:]=[B for B in A.sub_to_send if C!=B[0]]
+		try:
+			D=super().subscribe(C,qos);A.sub_to_confirm.setdefault(B,[]).append(D)
+			if len(A.sub_to_confirm[B])>A.CONFIRM_QUEUE_MAX:A.sub_to_confirm.pop(0)
+			return D
 		except (OSError,simple2.MQTTException)as E:
 			A.conn_issue=E,3
 			if A.NO_QUEUE_DUPS:
-				if C in A.sub_to_send:return
-			A.sub_to_send.append(C)
+				if B in A.sub_to_send:return
+			A.sub_to_send.append(B)
 	def send_queue(A):
 		D=[]
 		for B in A.msg_to_send:
