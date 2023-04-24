@@ -39,9 +39,7 @@ class MQTTClient(simple2.MQTTClient):
 			D='?','connect','publish','subscribe','reconnect','sendqueue','disconnect','ping','wait_msg','keepalive','check_msg';print('MQTT (%s): %r'%(D[C],B))
 	def reconnect(A):
 		try:B=super().connect(False);A.conn_issue=None;return B
-		except (OSError,simple2.MQTTException)as C:
-			A.conn_issue=C,4
-			if A.sock:A.sock.close();A.sock=None
+		except (OSError,simple2.MQTTException)as C:A.conn_issue=C,4;super().disconnect()
 	def resubscribe(A):
 		for (B,C) in A.subs:A.subscribe(B,C,False)
 	def add_msg_to_send(A,data):
