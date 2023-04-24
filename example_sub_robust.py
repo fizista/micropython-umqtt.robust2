@@ -56,6 +56,8 @@ while 1:
         else:
             c.resubscribe()
 
+    c.publish('/hello/topic', 'online', qos=1)
+
     c.check_msg() # needed when publish(qos=1), ping(), subscribe()
     c.send_queue()  # needed when using the caching capabilities for unsent messages
 
