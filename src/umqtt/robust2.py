@@ -129,9 +129,7 @@ class MQTTClient(simple2.MQTTClient):
             return out
         except (OSError, simple2.MQTTException) as e:
             self.conn_issue = (e, 4)
-            if self.sock:
-                self.sock.close()
-                self.sock = None
+            super().disconnect()
 
     def resubscribe(self):
         """
