@@ -16,6 +16,10 @@ c.NO_QUEUE_DUPS = True
 # Limit the number of unsent messages in the queue.
 c.MSG_QUEUE_MAX = 2
 
+last_will_topic = '/lw/topic'
+
+c.set_last_will(last_will_topic, 'Disconnected', retain=True)
+
 c.set_callback(sub_cb)
 # Connect to server, requesting not to clean session for this
 # client. If there was no existing session (False return value
@@ -44,6 +48,9 @@ if not c.connect(clean_session=False):
     c.subscribe(b"foo_topic")
 
 while 1:
+    # WARNING!!!
+    # Don't hold the loop for too long.
+    # There may be a problem with the connection. (MQTTException(7,), 9)
     utime.sleep_ms(500)
 
     # At this point in the code you must consider how to handle
@@ -53,12 +60,16 @@ while 1:
             # If the connection is successful, the is_conn_issue
             # method will not return a connection error.
             c.reconnect()
+            c.publish(last_will_topic, 'Connected', retain=True)
         else:
             c.resubscribe()
 
     c.publish('/hello/topic', 'online', qos=1)
 
-    c.check_msg() # needed when publish(qos=1), ping(), subscribe()
+    # WARNING!!!
+    # The below functions should be run as often as possible.
+    # A call every 500ms seems enough.
+    c.check_msg()  # needed when publish(qos=1), ping(), subscribe()
     c.send_queue()  # needed when using the caching capabilities for unsent messages
 
 c.disconnect()
