@@ -123,13 +123,10 @@ class MQTTClient(simple2.MQTTClient):
 
         Connection problems are captured and handled by `is_conn_issue()`
         """
-        try:
-            out = super().connect(False)
-            self.conn_issue = None
-            return out
-        except (OSError, simple2.MQTTException) as e:
-            self.conn_issue = (e, 4)
+        out = self.connect(False)
+        if self.conn_issue:
             super().disconnect()
+        return out
 
     def resubscribe(self):
         """
