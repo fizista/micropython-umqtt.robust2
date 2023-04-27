@@ -43,6 +43,7 @@ class MQTTClient(simple2.MQTTClient):
 		return B
 	def resubscribe(A):
 		for (B,C) in A.subs:A.subscribe(B,C,False)
+	def things_to_do(A):return len(A.msg_to_send)+len(A.sub_to_send)+sum([len(B)for B in A.msg_to_confirm.values()])+sum([len(B)for B in A.sub_to_confirm.values()])
 	def add_msg_to_send(A,data):
 		C=len(A.msg_to_send);C+=sum(map(len,A.msg_to_confirm.values()))
 		while C>=A.MSG_QUEUE_MAX:
