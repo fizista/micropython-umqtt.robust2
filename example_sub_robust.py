@@ -48,9 +48,6 @@ if not c.connect(clean_session=False):
     c.subscribe(b"foo_topic")
 
 while 1:
-    # WARNING!!!
-    # Don't hold the loop for too long.
-    # There may be a problem with the connection. (MQTTException(7,), 9)
     utime.sleep_ms(500)
 
     # At this point in the code you must consider how to handle
@@ -68,8 +65,13 @@ while 1:
 
     # WARNING!!!
     # The below functions should be run as often as possible.
-    # A call every 500ms seems enough.
-    c.check_msg()  # needed when publish(qos=1), ping(), subscribe()
-    c.send_queue()  # needed when using the caching capabilities for unsent messages
+    # There may be a problem with the connection. (MQTTException(7,), 9)
+    # In the following way, we clear the queue.
+    for _ in range(500):
+        c.check_msg()  # needed when publish(qos=1), ping(), subscribe()
+        c.send_queue()  # needed when using the caching capabilities for unsent messages
+        if not c.things_to_do():
+            break
+        utime.sleep_ms(1)
 
 c.disconnect()

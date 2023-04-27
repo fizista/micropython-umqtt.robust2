@@ -137,6 +137,24 @@ class MQTTClient(simple2.MQTTClient):
         for topic, qos in self.subs:
             self.subscribe(topic, qos, False)
 
+    def things_to_do(self):
+        """
+        The sum of all actions in the queues.
+
+        When the value equals 0, it means that the library has sent and confirms the sending:
+          * all messages
+          * all subscriptions
+
+        When the value equals 0, it means that the device can go into hibernation mode,
+        assuming that it has not subscribed to some topics.
+
+        :return: 0 (nothing to do) or int (number of things to do)
+        """
+        return len(self.msg_to_send) + \
+            len(self.sub_to_send) + \
+            sum([len(a) for a in self.msg_to_confirm.values()]) + \
+            sum([len(a) for a in self.sub_to_confirm.values()])
+
     def add_msg_to_send(self, data):
         """
         By overwriting this method, you can control the amount of stored data in the queue.
